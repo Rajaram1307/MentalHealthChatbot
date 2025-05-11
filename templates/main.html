@@ -1,0 +1,87 @@
+<!-- main.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Journals</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/journals.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">Your Journals</h1>
+            <a class="btn btn-info btn-lg" href="create_journal.html">Add Journal</a>
+            <a class="btn btn-info btn-lg" href="/dashboard">back</a>
+        </div>
+
+        <div id="journals-list">
+            <!-- Journals will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('/api/journals')
+                .then(response => response.json())
+                .then(data => renderJournals(data));
+        });
+
+        function renderJournals(journals) {
+            const journalsList = document.getElementById('journals-list');
+            journalsList.innerHTML = '';
+
+            if (journals.length === 0) {
+                journalsList.innerHTML = '<div class="alert alert-info">No journals found</div>';
+                return;
+            }
+
+            journals.forEach(journal => {
+                const date = new Date(journal.timestamp); // <-- Use `timestamp` as returned by backend
+                const formattedDate = isNaN(date) ? "Unknown Date" : date.toLocaleString();
+
+                const journalElement = document.createElement('div');
+                journalElement.className = 'journal-card card mb-4 border-info';
+                journalElement.innerHTML = `
+                    <div class="card-body">
+                        <h3 class="mb-3">Feeling <span class="journal-mood text-info">${journal.mood}</span>
+                        <span class="journal-date">on ${formattedDate}</span></h3>
+                        <p class="journal-content">${journal.content}</p>
+                        <hr class="my-3">
+                        <div class="d-flex justify-content-end align-items-center">
+                            <button class="btn btn-danger btn-sm" onclick="deleteJournal(${journal.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+
+                journalsList.appendChild(journalElement);
+            });
+        }
+
+        function deleteJournal(id) {
+            if (confirm("Are you sure you want to delete this journal?")) {
+                fetch(`/api/journals/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to delete journal');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert(data.message);
+                    fetch('/api/journals')
+                        .then(response => response.json())
+                        .then(data => renderJournals(data));
+                })
+                .catch(error => {
+                    alert("Error: " + error.message);
+                    console.error("Error:", error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

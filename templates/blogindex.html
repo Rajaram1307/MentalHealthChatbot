@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mental Health Blog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styleS.css') }}">
+    <style>
+        body {
+    background-color: #1a1a1b;
+    color: #d7dadc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 30px;
+}
+
+.btn {
+    background-color: #0079d3;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.create-btn {
+    display: block;
+    text-align: center;
+    margin: auto;
+    width: fit-content;
+}
+
+.post-card {
+    background-color: #272729;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0px 0px 5px rgba(255, 255, 255, 0.05);
+}
+
+.user-meta {
+    font-size: 0.9em;
+    color: #a1a1a3;
+    margin-bottom: 10px;
+}
+
+.post-title {
+    font-size: 1.3em;
+    color: #ffffff;
+    margin: 10px 0;
+}
+
+.post-content {
+    font-size: 1em;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.tag {
+    background-color: #ffb000;
+    color: #1a1a1b;
+    padding: 3px 10px;
+    display: inline-block;
+    border-radius: 20px;
+    font-size: 0.8em;
+    margin-bottom: 10px;
+}
+
+.post-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: #d7dadc;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.comment-input {
+    background-color: #1a1a1b;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 5px 10px;
+    color: white;
+    margin-right: 10px;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mental Health Blog Community</h1>
+        <a href="/create" class="btn create-btn">+ Create Post</a>
+        
+
+        {% for post in posts %}
+        <div class="post-card">
+            <div class="user-meta">
+                <span class="user">u/User_{{ post.id }}</span>
+                <span class="timestamp">• {{ post.created_at.strftime('%d %b %Y') }}</span>
+            </div>
+
+            <h2 class="post-title">{{ post.title }}</h2>
+            <p class="post-content">{{ post.content }}</p>
+
+            <div class="tag">Need Support</div>
+
+            <div class="post-actions">
+                <form method="get" action="/like/{{ post.id }}">
+                    <button class="action-btn">⬆️ {{ post.likes }}</button>
+                </form>
+
+                <form method="post" action="/comment/{{ post.id }}">
+                    <input type="text" name="comment" placeholder="Add comment..." class="comment-input">
+                    <button type="submit">💬 Comment</button>
+                </form>
+
+                <button class="action-btn">🔗 Share</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="/dashboard" class="btn create-btn">back</a>
+</body>
+</html>

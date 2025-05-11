@@ -1,0 +1,54 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #fce4ec);
+    color: #333;
+    padding: 20px;
+}
+
+.journal-form {
+    max-width: 700px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+legend h1 {
+    color: #7b1fa2;
+    font-size: 2rem;
+    text-align: center;
+}
+
+label {
+    font-weight: bold;
+    color: #555;
+}
+
+textarea {
+    height: 150px;
+    resize: vertical;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    padding: 12px;
+}
+
+select, textarea, input {
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+.btn-info {
+    background-color: #7b1fa2;
+    border-color: #6a1b9a;
+    color: white;
+    padding: 10px 25px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-info:hover {
+    background-color: #4a148c;
+    border-color: #4a148c;
+}

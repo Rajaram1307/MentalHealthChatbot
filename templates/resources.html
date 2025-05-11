@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Mental Health Awareness</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/quizzStyle.css') }}">
+    </head>
+
+    <body>
+        <header>
+            <div>
+                <a href="{{ url_for('index') }}">
+                    <h1>| Mental Health Awareness</h1>
+                </a>
+            </div>
+            <nav>
+                <a href="{{ url_for('index') }}">Questionnaire</a>
+                <a href="{{ url_for('stats') }}">Statistics</a>
+                <a href="{{ url_for('resources') }}">Resources</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1 id="resources-h1">Resources</h1>
+            <section class="video-section">
+                <div>
+                    <h2>No one has to suffer by themselves 
+                        <br>
+                        Please use the free resources to help yourself and others</h2>
+                </div>
+            </section>
+
+            <section class="resource" id="resource-1">
+                <a href="https://suicidepreventionlifeline.org/">
+                    <img src="{{ url_for('static', filename='assets/Lifeline-Logo.jpg') }}">
+                    <p class="resource-p" id="resource-1-p">Suicide Hotline <br> 800-273-8255 </p>
+                </a>
+            </section>
+
+            <section class="resource" id="resource-2">
+                <a href="https://afsp.org/">
+                    <img src="{{ url_for('static', filename='assets/AFSP.png') }}">
+                    <p class="resource-p" id="resource-2-p"> American Foundation for Suicide Prevention</p>
+                </a>
+            </section>
+
+            <section class="resource" id="resource-3">
+                <a href="https://www.samhsa.gov/">
+                    <img src="{{ url_for('static', filename='assets/SAMHSA.png') }}">
+                    <p class="resource-p" id="resource-3-p"> Substance Abuse and Mental Health Services Administration</p>
+                </a>
+            </section>
+
+            <section class="resource" id="resource-4">   
+                <a href="https://www.crisistextline.org/"> 
+                    <img src="{{ url_for('static', filename='assets/crisis.png') }}"/>
+                    <p class="resource-p"> Crisis Textline <br> Text 741741 </P>  
+                </a>
+            </section>
+
+            <!-- External images can remain as they are -->
+            <section class="resource" id="resource-5">
+                <a href="https://www.crisisconnections.org/">
+                    <img id="crisis-connections" src="https://www.icarol.com/wp-content/uploads/Crisis_Connections.png"/>
+                    <p class="resource-p">Crisis Connections Seattle  </p>
+                </a>
+            </section>
+
+            <section class="resource" id="resource-6">  
+                <a href="https://wa211.org/">
+                    <img id="wa211" src="https://wa211.org/wp-content/uploads/2019/01/211-logo-large.png"/>
+                    <p class="resource-p">Washington 211  </p>
+                </a>
+            </section>
+        </main>
+    </body>
+</html>
