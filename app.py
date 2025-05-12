@@ -152,26 +152,63 @@ def logout():
     flash('You have been logged out', 'success')
     return redirect(url_for('home'))
 
-# Application Modules
+# Application Modules (with original template names)
 @app.route('/chat')
 def chat():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('chat.html')
+    return render_template('chat.html')  # Original template name
+
+@app.route('/food')
+def food():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('food.html')  # Original template name
 
 @app.route('/journal')
 def journal():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('main.html')
+    return render_template('main.html')  # Original template name
 
-@app.route('/create-journal')
+@app.route('/create_journal')
 def create_journal_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('create_journal.html')
+    return render_template('create_journal.html')  # Original template name
 
-# Journal API Endpoints
+@app.route('/meditation')
+def meditation():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('medi.html')  # Original template name
+
+@app.route('/quiz')
+def quiz():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('quizz.html')  # Original template name
+
+@app.route('/stats')
+def stats():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('stats.html')  # Original template name
+
+@app.route('/resources')
+def resources():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('resources.html')  # Original template name
+
+@app.route('/blog')
+def blog_index():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    return render_template('blogindex.html', posts=posts)  # Original template name
+
+# API Endpoints
 @app.route('/api/journals', methods=['POST'])
 def create_journal():
     if 'user_id' not in session:
@@ -200,46 +237,7 @@ def get_journals():
         'timestamp': j.timestamp.isoformat()
     } for j in journals])
 
-# Other Modules
-@app.route('/meditation')
-def meditation():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('medi.html')
-
-@app.route('/quiz')
-def quiz():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('quizz.html')
-
-@app.route('/stats')
-def stats():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('stats.html')
-
-@app.route('/resources')
-def resources():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('resources.html')
-
-@app.route('/food')
-def food():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('food.html')
-
-# Blog Module
-@app.route('/blog')
-def blog_index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    posts = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template('blogindex.html', posts=posts)
-
-@app.route('/create-post', methods=['POST'])
+@app.route('/create_post', methods=['POST'])
 def create_post():
     if 'user_id' not in session:
         return redirect(url_for('login'))
