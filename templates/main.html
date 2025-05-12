@@ -1,4 +1,3 @@
-<!-- main.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Journals</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="static/css/journals.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/journals.css') }}">
 </head>
 <body>
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h2">Your Journals</h1>
-            <a class="btn btn-info btn-lg" href="/create_journal">Add Journal</a>
-            <a class="btn btn-info btn-lg" href="/dashboard">back</a>
+            <a class="btn btn-info btn-lg" href="{{ url_for('create_journal_page') }}">Add Journal</a>
+            <a class="btn btn-info btn-lg" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
         </div>
 
         <div id="journals-list">
@@ -22,24 +21,40 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            fetch('/api/journals')
-                .then(response => response.json())
-                .then(data => renderJournals(data));
+        document.addEventListener('DOMContentLoaded', function() {
+            loadJournals();
         });
+
+        function loadJournals() {
+            fetch('/api/journals')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => renderJournals(data))
+                .catch(error => {
+                    console.error('Error loading journals:', error);
+                    document.getElementById('journals-list').innerHTML = `
+                        <div class="alert alert-danger">
+                            Failed to load journals. Please try again later.
+                        </div>
+                    `;
+                });
+        }
 
         function renderJournals(journals) {
             const journalsList = document.getElementById('journals-list');
             journalsList.innerHTML = '';
 
-            if (journals.length === 0) {
+            if (!journals || journals.length === 0) {
                 journalsList.innerHTML = '<div class="alert alert-info">No journals found</div>';
                 return;
             }
 
             journals.forEach(journal => {
-                const date = new Date(journal.timestamp); // <-- Use `timestamp` as returned by backend
-                const formattedDate = isNaN(date) ? "Unknown Date" : date.toLocaleString();
+                const date = new Date(journal.timestamp);
+                const formattedDate = isNaN(date.getTime()) ? "Unknown Date" : 
+                    date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 
                 const journalElement = document.createElement('div');
                 journalElement.className = 'journal-card card mb-4 border-info';
@@ -50,11 +65,11 @@
                         <p class="journal-content">${journal.content}</p>
                         <hr class="my-3">
                         <div class="d-flex justify-content-end align-items-center">
+                            <a href="/edit_journal/${journal.id}" class="btn btn-primary btn-sm me-2">Edit</a>
                             <button class="btn btn-danger btn-sm" onclick="deleteJournal(${journal.id})">Delete</button>
                         </div>
                     </div>
                 `;
-
                 journalsList.appendChild(journalElement);
             });
         }
@@ -65,16 +80,12 @@
                     method: 'DELETE'
                 })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to delete journal');
-                    }
+                    if (!response.ok) throw new Error('Failed to delete journal');
                     return response.json();
                 })
                 .then(data => {
                     alert(data.message);
-                    fetch('/api/journals')
-                        .then(response => response.json())
-                        .then(data => renderJournals(data));
+                    loadJournals();
                 })
                 .catch(error => {
                     alert("Error: " + error.message);
