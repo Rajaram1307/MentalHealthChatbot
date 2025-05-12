@@ -1,12 +1,5 @@
-# Core Flask & Web
-Flask==3.0.2
-Flask-MySQLdb==2.0.0
-Flask-Cors==4.0.0
-gunicorn==21.2.0
 
-# Database
-mysqlclient==2.2.1
-bcrypt==4.1.2
+
 
 # TensorFlow/Keras - UPDATED TO COMPATIBLE VERSIONS
 tensorflow==2.15.0  # Last version with built-in Keras
@@ -30,10 +23,4 @@ flask==2.3.2
 flask-sqlalchemy==3.0.3
 flask-cors==3.0.10
 flask-mysqldb==1.0.1
-bcrypt==4.0.1
-deepface==0.0.79
-opencv-python==4.7.0.72
-numpy==1.24.3
-python-dotenv==1.0.0
-google-generativeai==0.1.0
 mysqlclient==2.1.1
