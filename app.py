@@ -146,7 +146,31 @@ def dashboard():
         return redirect(url_for('login'))
     return render_template('dashboard.html', email=session['email'])
 
-# Journal Endpoints
+# Chat Module
+@app.route('/chat')
+def chat():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('chat.html')
+
+@app.route('/get', methods=['POST'])
+def chatbot_response():
+    user_text = request.form['msg']
+    return str(classify_intent(user_text))
+
+# Journal Module
+@app.route('/journal')
+def journal():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('main.html')
+
+@app.route('/create_journal')
+def create_journal_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('create_journal.html')
+
 @app.route('/api/journals', methods=['POST'])
 def create_journal():
     if 'user_id' not in session:
@@ -175,13 +199,13 @@ def get_journals():
         'timestamp': j.timestamp.isoformat()
     } for j in journals])
 
-# Blog Endpoints
-@app.route('/blogindex.html')
+# Blog Module
+@app.route('/blog')
 def blog_index():
     posts = Post.query.order_by(Post.created_at.desc()).all()
     return render_template('blogindex.html', posts=posts)
 
-@app.route('/create', methods=['POST'])
+@app.route('/create_post', methods=['POST'])
 def create_post():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -195,7 +219,98 @@ def create_post():
     db.session.commit()
     return redirect(url_for('blog_index'))
 
-# ... [Keep all your other existing routes like /analyze-image, /chat, etc.] ...
+# Meditation Module
+@app.route('/meditation')
+def meditation():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('medi.html')
+
+# Quiz Module
+@app.route('/quiz')
+def quiz():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('quizz.html')
+
+# Stats Module
+@app.route('/stats')
+def stats():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('stats.html')
+
+# Resources Module
+@app.route('/resources')
+def resources():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('resources.html')
+
+# Food Module
+@app.route('/food')
+def food():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('food.html')
+
+# Emotion Analysis Module
+@app.route('/analyze-image', methods=['POST'])
+def analyze_image():
+    file = request.files['image']
+    npimg = np.fromfile(file, np.uint8)
+    img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    try:
+        analysis = DeepFace.analyze(img, actions=['emotion'], enforce_detection=False)
+        dominant_emotion = analysis['dominant_emotion']
+        return jsonify({"mood": dominant_emotion})
+    except ValueError as e:
+        return jsonify({"mood": "no_face", "error": str(e)})
+
+@app.route('/start-capture')
+def start_capture():
+    user_mood = capture_emotions()
+    return jsonify({"mood": user_mood})
+
+def capture_emotions():
+    cap = cv2.VideoCapture(0)
+    captured_expressions = []
+    capture_limit = 20
+
+    while len(captured_expressions) < capture_limit:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        rgb_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2RGB)
+        faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+        for (x, y, w, h) in faces:
+            face_roi = rgb_frame[y:y + h, x:x + w]
+            result = DeepFace.analyze(face_roi, actions=['emotion'], enforce_detection=False)
+            emotion = result[0]['dominant_emotion']
+            if emotion == "neutral":
+                emotion = "sad"
+            captured_expressions.append(emotion)
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    if captured_expressions:
+        final_emotion = Counter(captured_expressions).most_common(1)[0][0]
+    else:
+        final_emotion = "No emotion detected"
+
+    return final_emotion
+
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You have been logged out', 'success')
+    return redirect(url_for('home'))
 
 if __name__ == '__main__':
     app.run(debug=True)
