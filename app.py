@@ -183,7 +183,7 @@ def meditation():
         return redirect(url_for('login'))
     return render_template('medi.html')  # Original template name
 
-@app.route('/quizz')
+@app.route('/quiz')
 def quiz():
     if 'user_id' not in session:
         return redirect(url_for('login'))
