@@ -34,7 +34,16 @@ except Exception as e:
 
 app = Flask(__name__)
 CORS(app)
-app.secret_key = 'your_secret_key'
+app.secret_key = os.getenv('SECRET_KEY') or 'your_secret_key_here_please_change_it'
+
+# Hardcoded user credentials for demo purposes
+DEMO_USERS = {
+    "user@example.com": {
+        "id": 1,
+        "name": "Demo User",
+        "password": bcrypt.hashpw(b"password123", bcrypt.gensalt())  # Password is "password123"
+    }
+}
 
 # Load intents
 with open('intents.json') as json_data:
@@ -68,21 +77,37 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        flash('Login functionality is currently disabled', 'error')
-        return redirect(url_for('login'))
+        email = request.form['email']
+        password = request.form['password'].encode('utf-8')
+        
+        # Check if user exists in our demo users
+        user = DEMO_USERS.get(email)
+        
+        if user and bcrypt.checkpw(password, user['password']):
+            session['user_id'] = user['id']
+            session['email'] = email
+            session['name'] = user['name']
+            flash('Login successful!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password', 'error')
+            return redirect(url_for('login'))
+
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        flash('Registration functionality is currently disabled', 'error')
-        return redirect(url_for('register'))
+        flash('Registration is disabled in demo mode. Use email: user@example.com and password: password123', 'info')
+        return redirect(url_for('login'))
     return render_template('index.html')
 
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' in session:
-        return render_template('dashboard.html', email=session.get('email', 'guest@example.com'))
+        return render_template('dashboard.html', 
+                             email=session.get('email'),
+                             name=session.get('name'))
     else:
         flash('You need to login first', 'error')
         return redirect(url_for('login'))
@@ -93,151 +118,7 @@ def logout():
     flash('You have been logged out', 'success')
     return redirect(url_for('home'))
 
-@app.route('/chat.html')
-def chat():
-    return render_template('chat.html')
-
-@app.route('/main.html')
-def journal():
-    return render_template('main.html')
-
-@app.route('/create_journal.html')
-def create_journal_page():
-    return render_template('create_journal.html')
-
-@app.route('/edit_journal.html')
-def edit_journal_page():
-    return render_template('edit_journal.html')
-
-@app.route('/medi.html')
-def medi():
-    return render_template('medi.html')
-
-@app.route('/quizz.html')
-def quiz():
-    return render_template('quizz.html')
-
-@app.route('/stats')
-def stats():
-    return render_template('stats.html')
-
-@app.route('/resources')
-def resources():
-    return render_template('resources.html')
-
-@app.route('/food.html')
-def food():
-    return render_template('food.html')
-
-@app.route('/get', methods=['POST'])
-def chatbot_response():
-    user_text = request.form['msg']
-    return str(classify_intent(user_text))
-
-@app.route('/analyze-image', methods=['POST'])
-def analyze_image():
-    file = request.files['image']
-    npimg = np.fromfile(file, np.uint8)
-    img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
-    try:
-        analysis = DeepFace.analyze(img, actions=['emotion'], enforce_detection=False)
-        dominant_emotion = analysis['dominant_emotion']
-        return jsonify({"mood": dominant_emotion})
-    except ValueError as e:
-        return jsonify({"mood": "no_face", "error": str(e)})
-
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
-def capture_emotions():
-    cap = cv2.VideoCapture(0)
-    captured_expressions = []
-    capture_limit = 20
-
-    while len(captured_expressions) < capture_limit:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        rgb_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2RGB)
-        faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-        for (x, y, w, h) in faces:
-            face_roi = rgb_frame[y:y + h, x:x + w]
-            result = DeepFace.analyze(face_roi, actions=['emotion'], enforce_detection=False)
-            emotion = result[0]['dominant_emotion']
-            if emotion == "neutral":
-                emotion = "sad"
-            captured_expressions.append(emotion)
-
-        cv2.imshow('Capturing Emotion...', frame)
-        cv2.waitKey(1)
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-    if captured_expressions:
-        final_emotion = Counter(captured_expressions).most_common(1)[0][0]
-    else:
-        final_emotion = "No emotion detected"
-
-    return final_emotion
-
-@app.route('/start-capture')
-def start_capture():
-    user_mood = capture_emotions()
-    return jsonify({"mood": user_mood})
-
-# ------------------- BLOG MODULE ------------------
-
-@app.route('/blogindex.html',endpoint='index')
-def blog_index():
-    # Return empty list since we removed database functionality
-    return render_template('blogindex.html', posts=[])
-
-@app.route('/create', methods=['GET', 'POST'])
-def create_post():
-    if request.method == 'POST':
-        flash('Blog functionality is currently disabled', 'error')
-        return redirect(url_for('blog_index'))
-    return render_template('create_post.html')
-
-@app.route('/like/<int:post_id>')
-def like_post(post_id):
-    flash('Blog functionality is currently disabled', 'error')
-    return redirect(url_for('blog_index'))
-
-@app.route('/post/<int:post_id>')
-def post_detail(post_id):
-    flash('Blog functionality is currently disabled', 'error')
-    return redirect(url_for('blog_index'))
-
-@app.route('/comment/<int:post_id>', methods=['POST'])
-def comment_post(post_id):
-    flash('Blog functionality is currently disabled', 'error')
-    return redirect(url_for('blog_index'))
-
-# ---------------- JOURNAL API ROUTES ----------------
-
-@app.route('/api/journals', methods=['POST'])
-def create_journal():
-    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
-
-@app.route('/api/journals', methods=['GET'])
-def get_journals():
-    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
-
-@app.route('/api/journals/<int:id>', methods=['GET'])
-def get_journal(id):
-    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
-
-@app.route('/api/journals/<int:id>', methods=['PUT'])
-def update_journal(id):
-    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
-
-@app.route('/api/journals/<int:id>', methods=['DELETE'])
-def delete_journal(id):
-    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
+# ... [keep all your other routes the same as in your original code] ...
 
 if __name__ == "__main__":
     app.run(debug=True)
