@@ -165,17 +165,7 @@ def food():
         return redirect(url_for('login'))
     return render_template('food.html')  # Original template name
 
-@app.route('/main')
-def journal():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('main.html')  # Original template name
-
-@app.route('/create_journal')
-def create_journal_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('create_journal.html')  # Original template name
+ # Original template name
 
 @app.route('/medi')
 def meditation():
@@ -208,7 +198,27 @@ def blog_index():
     posts = Post.query.order_by(Post.created_at.desc()).all()
     return render_template('blogindex.html', posts=posts)  # Original template name
 
-# API Endpoints
+# Journal Module Routes
+@app.route('/main')
+def journal():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('main.html')
+
+@app.route('/create_journal')
+def create_journal_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('create_journal.html')
+
+@app.route('/edit_journal/<int:id>')
+def edit_journal_page(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    journal = Journal.query.get_or_404(id)
+    return render_template('edit_journal.html', journal=journal)
+
+# Journal API Endpoints
 @app.route('/api/journals', methods=['POST'])
 def create_journal():
     if 'user_id' not in session:
@@ -224,19 +234,33 @@ def create_journal():
     db.session.commit()
     return jsonify({'message': 'Journal created successfully'}), 201
 
-@app.route('/api/journals', methods=['GET'])
-def get_journals():
+@app.route('/api/journals/<int:id>', methods=['PUT'])
+def update_journal(id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     
-    journals = Journal.query.filter_by(user_id=session['user_id']).order_by(Journal.timestamp.desc()).all()
-    return jsonify([{
-        'id': j.id,
-        'mood': j.mood,
-        'content': j.content,
-        'timestamp': j.timestamp.isoformat()
-    } for j in journals])
+    journal = Journal.query.get_or_404(id)
+    if journal.user_id != session['user_id']:
+        return jsonify({'error': 'Forbidden'}), 403
+    
+    data = request.json
+    journal.mood = data.get('mood', journal.mood)
+    journal.content = data.get('content', journal.content)
+    db.session.commit()
+    return jsonify({'message': 'Journal updated successfully'})
 
+@app.route('/api/journals/<int:id>', methods=['DELETE'])
+def delete_journal(id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    journal = Journal.query.get_or_404(id)
+    if journal.user_id != session['user_id']:
+        return jsonify({'error': 'Forbidden'}), 403
+    
+    db.session.delete(journal)
+    db.session.commit()
+    return jsonify({'message': 'Journal deleted successfully'})
 @app.route('/create_post', methods=['POST'])
 def create_post():
     if 'user_id' not in session:
