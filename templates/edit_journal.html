@@ -1,68 +1,79 @@
-<!-- edit_journal.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Journal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/journals.css') }}">
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="mb-4">Edit Journal Entry</h1>
-        <form id="editJournalForm">
-            <div class="mb-3">
+    <div class="container journal-form mt-5">
+        <div class="d-flex justify-content-between mb-4">
+            <h1>Edit Journal Entry</h1>
+            <a href="{{ url_for('journal') }}" class="btn btn-secondary">Back to Journals</a>
+        </div>
+
+        <form id="journalForm">
+            <input type="hidden" id="journalId" value="{{ journal.id }}">
+
+            <div class="form-group mb-4">
                 <label for="mood" class="form-label">Mood</label>
-                <select class="form-control" id="mood" required>
-                    <option value="">Select mood</option>
-                    <option value="Happy">Happy</option>
-                    <option value="Sad">Sad</option>
-                    <option value="Excited">Excited</option>
-                    <option value="Angry">Angry</option>
-                    <option value="Calm">Calm</option>
+                <select class="form-select" id="mood" name="mood" required>
+                    <option value="">Select your mood</option>
+                    <option value="Happy" {% if journal.mood == 'Happy' %}selected{% endif %}>Happy</option>
+                    <option value="Sad" {% if journal.mood == 'Sad' %}selected{% endif %}>Sad</option>
+                    <option value="Excited" {% if journal.mood == 'Excited' %}selected{% endif %}>Excited</option>
+                    <option value="Angry" {% if journal.mood == 'Angry' %}selected{% endif %}>Angry</option>
+                    <option value="Calm" {% if journal.mood == 'Calm' %}selected{% endif %}>Calm</option>
                 </select>
             </div>
-            <div class="mb-3">
+
+            <div class="form-group mb-4">
                 <label for="content" class="form-label">Content</label>
-                <textarea class="form-control" id="content" rows="5" required></textarea>
+                <textarea class="form-control" id="content" name="content" rows="5" required>{{ journal.content }}</textarea>
             </div>
-            <button type="submit" class="btn btn-info">Update Journal</button>
+
+            <div class="form-group mb-4">
+                <button type="submit" class="btn btn-primary btn-lg">Update Journal</button>
+            </div>
         </form>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const journalId = urlParams.get('id');
-
-        // Fetch journal to prefill
-        fetch(`/api/journals/${journalId}`)
-            .then(res => res.json())
-            .then(journal => {
-                document.getElementById('mood').value = journal.mood;
-                document.getElementById('content').value = journal.content;
-            });
-
-        document.getElementById('editJournalForm').addEventListener('submit', function (e) {
+        document.getElementById('journalForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const updatedMood = document.getElementById('mood').value;
-            const updatedContent = document.getElementById('content').value;
+            const id = document.getElementById('journalId').value;
+            const mood = document.getElementById('mood').value;
+            const content = document.getElementById('content').value;
 
-            fetch(`/api/journals/${journalId}`, {
+            if (!mood || !content) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            fetch(`/api/journals/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    mood: updatedMood,
-                    content: updatedContent
-                })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ mood, content })
             })
-            .then(res => {
-                if (!res.ok) throw new Error("Failed to update journal");
-                return res.json();
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error || 'Failed to update journal') });
+                }
+                return response.json();
             })
             .then(data => {
                 alert(data.message);
                 window.location.href = '/main';
             })
-            .catch(err => alert("Error: " + err.message));
+            .catch(error => {
+                alert("Error: " + error.message);
+                console.error(error);
+            });
         });
     </script>
 </body>
