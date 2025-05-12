@@ -1,6 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_mysqldb import MySQL
-import MySQLdb.cursors
 import bcrypt
 from deepface import DeepFace
 from collections import Counter
@@ -36,16 +34,7 @@ except Exception as e:
 
 app = Flask(__name__)
 CORS(app)
-
-# MySQL Configuration
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Rajaram001'
-app.config['MYSQL_DB'] = 'final'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 app.secret_key = 'your_secret_key'
-
-mysql = MySQL(app)
 
 # Load intents
 with open('intents.json') as json_data:
@@ -79,50 +68,21 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password'].encode('utf-8')
-        cursor = mysql.connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-        cursor.close()
-
-        if user and bcrypt.checkpw(password, user['password'].encode('utf-8')):
-            session['user_id'] = user['id']
-            session['email'] = user['email']
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid email or password', 'error')
-            return redirect(url_for('login'))
-
+        flash('Login functionality is currently disabled', 'error')
+        return redirect(url_for('login'))
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password'].encode('utf-8')
-        hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
-        cursor = mysql.connection.cursor()
-
-        try:
-            cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
-                           (name, email, hashed_password))
-            mysql.connection.commit()
-            flash('Registration successful! Please login.', 'success')
-            return redirect(url_for('login'))
-        except Exception as e:
-            mysql.connection.rollback()
-            flash('Email already exists or an error occurred.', 'error')
-        finally:
-            cursor.close()
-
+        flash('Registration functionality is currently disabled', 'error')
+        return redirect(url_for('register'))
     return render_template('index.html')
 
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' in session:
-        return render_template('dashboard.html', email=session['email'])
+        return render_template('dashboard.html', email=session.get('email', 'guest@example.com'))
     else:
         flash('You need to login first', 'error')
         return redirect(url_for('login'))
@@ -232,153 +192,52 @@ def start_capture():
 
 @app.route('/blogindex.html',endpoint='index')
 def blog_index():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM posts ORDER BY created_at DESC")
-    posts = cursor.fetchall()
-    cursor.close()
-    return render_template('blogindex.html', posts=posts)
+    # Return empty list since we removed database functionality
+    return render_template('blogindex.html', posts=[])
 
 @app.route('/create', methods=['GET', 'POST'])
 def create_post():
     if request.method == 'POST':
-        title = request.form['title']
-        content = request.form['content']
-        cursor = mysql.connection.cursor()
-        cursor.execute("INSERT INTO posts (title, content) VALUES (%s, %s)", (title, content))
-        mysql.connection.commit()
-        cursor.close()
+        flash('Blog functionality is currently disabled', 'error')
         return redirect(url_for('blog_index'))
     return render_template('create_post.html')
 
 @app.route('/like/<int:post_id>')
 def like_post(post_id):
-    cursor = mysql.connection.cursor()
-    cursor.execute("UPDATE posts SET likes = likes + 1 WHERE id = %s", (post_id,))
-    mysql.connection.commit()
-    cursor.close()
+    flash('Blog functionality is currently disabled', 'error')
     return redirect(url_for('blog_index'))
 
 @app.route('/post/<int:post_id>')
 def post_detail(post_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM posts WHERE id = %s", (post_id,))
-    post = cursor.fetchone()
-
-    if not post:
-        flash("Post not found!", "error")
-        return redirect(url_for('index'))
-
-    cursor.execute("SELECT * FROM comments WHERE post_id = %s ORDER BY created_at DESC", (post_id,))
-    comments = cursor.fetchall()
-    cursor.close()
-
-    return render_template('post_detail.html', post=post, comments=comments)
+    flash('Blog functionality is currently disabled', 'error')
+    return redirect(url_for('blog_index'))
 
 @app.route('/comment/<int:post_id>', methods=['POST'])
 def comment_post(post_id):
-    comment = request.form['comment']
-    cursor = mysql.connection.cursor()
-    try:
-        cursor.execute("INSERT INTO comments (post_id, comment) VALUES (%s, %s)", (post_id, comment))
-        mysql.connection.commit()
-    except Exception as e:
-        mysql.connection.rollback()
-        flash(f'Error adding comment: {e}', 'error')
-    finally:
-        cursor.close()
-    return redirect(url_for('post_detail', post_id=post_id))
+    flash('Blog functionality is currently disabled', 'error')
+    return redirect(url_for('blog_index'))
 
 # ---------------- JOURNAL API ROUTES ----------------
 
 @app.route('/api/journals', methods=['POST'])
 def create_journal():
-    data = request.json
-    mood = data.get('mood')
-    content = data.get('content')
-    username = "guest_user"
-
-    if not mood or not content:
-        return jsonify({'error': 'All fields are required'}), 400
-
-    try:
-        cursor = mysql.connection.cursor()
-        cursor.execute("INSERT INTO journal (mood, content, username, timestamp) VALUES (%s, %s, %s, %s)",
-                       (mood, content, username, datetime.now()))
-        mysql.connection.commit()
-        return jsonify({'message': 'Journal created successfully'}), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        cursor.close()
+    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
 
 @app.route('/api/journals', methods=['GET'])
 def get_journals():
-    username = "guest_user"
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT * FROM journal WHERE username = %s ORDER BY timestamp DESC", (username,))
-        journals = cursor.fetchall()
-        for journal in journals:
-            if isinstance(journal['timestamp'], datetime):
-                journal['timestamp'] = journal['timestamp'].isoformat()
-        return jsonify(journals), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        cursor.close()
+    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
 
 @app.route('/api/journals/<int:id>', methods=['GET'])
 def get_journal(id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM journal WHERE id = %s", (id,))
-    journal = cursor.fetchone()
-    cursor.close()
-
-    if journal and journal['username'] == "guest_user":
-        if isinstance(journal['timestamp'], datetime):
-            journal['timestamp'] = journal['timestamp'].isoformat()
-        return jsonify(journal), 200
-    return jsonify({'error': 'Journal not found or access denied'}), 404
+    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
 
 @app.route('/api/journals/<int:id>', methods=['PUT'])
 def update_journal(id):
-    data = request.json
-    mood = data.get('mood')
-    content = data.get('content')
-
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM journal WHERE id = %s", (id,))
-    journal = cursor.fetchone()
-
-    if not journal or journal['username'] != "guest_user":
-        return jsonify({'error': 'Access denied'}), 403
-
-    try:
-        cursor.execute("UPDATE journal SET mood = %s, content = %s WHERE id = %s", (mood, content, id))
-        mysql.connection.commit()
-        return jsonify({'message': 'Journal updated successfully'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        cursor.close()
+    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
 
 @app.route('/api/journals/<int:id>', methods=['DELETE'])
 def delete_journal(id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM journal WHERE id = %s", (id,))
-    journal = cursor.fetchone()
-
-    if not journal or journal['username'] != "guest_user":
-        return jsonify({'error': 'Access denied'}), 403
-
-    try:
-        cursor.execute("DELETE FROM journal WHERE id = %s", (id,))
-        mysql.connection.commit()
-        return jsonify({'message': 'Journal deleted successfully'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        cursor.close()
+    return jsonify({'error': 'Journal functionality is currently disabled'}), 503
 
 if __name__ == "__main__":
     app.run(debug=True)
