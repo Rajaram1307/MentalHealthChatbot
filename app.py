@@ -165,7 +165,7 @@ def food():
         return redirect(url_for('login'))
     return render_template('food.html')  # Original template name
 
-@app.route('/journal')
+@app.route('/main')
 def journal():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -177,13 +177,13 @@ def create_journal_page():
         return redirect(url_for('login'))
     return render_template('create_journal.html')  # Original template name
 
-@app.route('/meditation')
+@app.route('/medi')
 def meditation():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('medi.html')  # Original template name
 
-@app.route('/quiz')
+@app.route('/quizz')
 def quiz():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -201,7 +201,7 @@ def resources():
         return redirect(url_for('login'))
     return render_template('resources.html')  # Original template name
 
-@app.route('/blog')
+@app.route('/blogindex')
 def blog_index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
