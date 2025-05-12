@@ -1,26 +1,23 @@
+# Core Requirements
+Flask==2.3.2
+flask-sqlalchemy==3.0.3
+flask-cors==3.0.10
+gunicorn==21.2.0
 
+# Authentication
+bcrypt==4.1.2
 
+# Database
+SQLAlchemy==2.0.25
+mysqlclient==2.2.1  # Only include if using MySQL
 
-# TensorFlow/Keras - UPDATED TO COMPATIBLE VERSIONS
-tensorflow==2.15.0  # Last version with built-in Keras
+# AI/ML Components
+tensorflow==2.15.0
 numpy==1.26.4
-
-# NLP
-nltk==3.8.1
-
-# Computer Vision
 opencv-python==4.9.0.80
 deepface==0.0.79
 Pillow==10.2.0
 
-# Gemini AI & Utilities
+# Gemini AI
 google-generativeai==0.3.2
 python-dotenv==1.0.1
-autocorrect==2.6.1
-
-
-flask==2.3.2
-flask-sqlalchemy==3.0.3
-flask-cors==3.0.10
-flask-mysqldb==1.0.1
-mysqlclient==2.1.1
