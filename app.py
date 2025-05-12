@@ -26,55 +26,52 @@ except Exception as e:
     print(f"Error initializing Gemini: {e}")
     gemini_model = None
 
-# Initialize Flask App
+# Initialize Flask App with SQLite
 app = Flask(__name__)
 CORS(app)
-app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
-
-# Configure SQLite Database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.secret_key = os.getenv('SECRET_KEY', 'your_secret_key_here')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mentalhealth.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Database Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    email = db.Column(db.String(100), unique=True)
-    password = db.Column(db.String(100))
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
 
 class Journal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    mood = db.Column(db.String(50))
-    content = db.Column(db.Text)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    mood = db.Column(db.String(50), nullable=False)
+    content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100))
-    content = db.Column(db.Text)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     likes = db.Column(db.Integer, default=0)
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create tables
+# Create database tables
 with app.app_context():
     db.create_all()
-    # Create demo user if not exists
-    if not User.query.filter_by(email="user@example.com").first():
-        hashed_pw = bcrypt.hashpw(b"password123", bcrypt.gensalt())
+    # Create demo user if none exists
+    if not User.query.first():
         demo_user = User(
             name="Demo User",
             email="user@example.com",
-            password=hashed_pw
+            password=bcrypt.hashpw(b"password123", bcrypt.gensalt())
         )
         db.session.add(demo_user)
         db.session.commit()
@@ -93,15 +90,14 @@ def classify_intent(user_text):
         try:
             response = gemini_model.generate_content(
                 f"Mental health support response to: {user_text}\n"
-                "Keep it brief (1-2 sentences), empathetic, and supportive."
+                "Keep response brief (1-2 sentences), supportive."
             )
             return response.text
         except Exception as e:
-            print(f"Gemini error: {e}")
-    
-    return "I'm here for you. How can I help today?"
+            print(f"Gemini API error: {e}")
+    return "I'm here for you. How can I assist you today?"
 
-# Routes
+# Authentication Routes
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -117,9 +113,10 @@ def login():
             session['user_id'] = user.id
             session['email'] = user.email
             session['name'] = user.name
+            flash('Logged in successfully', 'success')
             return redirect(url_for('dashboard'))
         else:
-            flash('Invalid credentials', 'error')
+            flash('Invalid email or password', 'error')
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -134,7 +131,7 @@ def register():
             )
             db.session.add(user)
             db.session.commit()
-            flash('Registration successful!', 'success')
+            flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
         except:
             flash('Email already exists', 'error')
@@ -143,34 +140,38 @@ def register():
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
+        flash('Please login first', 'error')
         return redirect(url_for('login'))
-    return render_template('dashboard.html', email=session['email'])
+    return render_template('dashboard.html', 
+                         name=session.get('name'),
+                         email=session.get('email'))
 
-# Chat Module
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You have been logged out', 'success')
+    return redirect(url_for('home'))
+
+# Application Modules
 @app.route('/chat')
 def chat():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('chat.html')
 
-@app.route('/get', methods=['POST'])
-def chatbot_response():
-    user_text = request.form['msg']
-    return str(classify_intent(user_text))
-
-# Journal Module
 @app.route('/journal')
 def journal():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('main.html')
 
-@app.route('/create_journal')
+@app.route('/create-journal')
 def create_journal_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('create_journal.html')
 
+# Journal API Endpoints
 @app.route('/api/journals', methods=['POST'])
 def create_journal():
     if 'user_id' not in session:
@@ -178,13 +179,13 @@ def create_journal():
     
     data = request.json
     journal = Journal(
-        mood=data['mood'],
-        content=data['content'],
-        user_id=session['user_id']
+        user_id=session['user_id'],
+        mood=data.get('mood'),
+        content=data.get('content')
     )
     db.session.add(journal)
     db.session.commit()
-    return jsonify({'message': 'Journal saved'}), 201
+    return jsonify({'message': 'Journal created successfully'}), 201
 
 @app.route('/api/journals', methods=['GET'])
 def get_journals():
@@ -199,62 +200,65 @@ def get_journals():
         'timestamp': j.timestamp.isoformat()
     } for j in journals])
 
-# Blog Module
-@app.route('/blog')
-def blog_index():
-    posts = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template('blogindex.html', posts=posts)
-
-@app.route('/create_post', methods=['POST'])
-def create_post():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    post = Post(
-        title=request.form['title'],
-        content=request.form['content'],
-        user_id=session['user_id']
-    )
-    db.session.add(post)
-    db.session.commit()
-    return redirect(url_for('blog_index'))
-
-# Meditation Module
+# Other Modules
 @app.route('/meditation')
 def meditation():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('medi.html')
 
-# Quiz Module
 @app.route('/quiz')
 def quiz():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('quizz.html')
 
-# Stats Module
 @app.route('/stats')
 def stats():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('stats.html')
 
-# Resources Module
 @app.route('/resources')
 def resources():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('resources.html')
 
-# Food Module
 @app.route('/food')
 def food():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('food.html')
 
-# Emotion Analysis Module
+# Blog Module
+@app.route('/blog')
+def blog_index():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    return render_template('blogindex.html', posts=posts)
+
+@app.route('/create-post', methods=['POST'])
+def create_post():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    post = Post(
+        user_id=session['user_id'],
+        title=request.form['title'],
+        content=request.form['content']
+    )
+    db.session.add(post)
+    db.session.commit()
+    return redirect(url_for('blog_index'))
+
+# AI Endpoints
+@app.route('/get', methods=['POST'])
+def chatbot_response():
+    user_text = request.form['msg']
+    return str(classify_intent(user_text))
+
 @app.route('/analyze-image', methods=['POST'])
 def analyze_image():
     file = request.files['image']
@@ -262,55 +266,9 @@ def analyze_image():
     img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
     try:
         analysis = DeepFace.analyze(img, actions=['emotion'], enforce_detection=False)
-        dominant_emotion = analysis['dominant_emotion']
-        return jsonify({"mood": dominant_emotion})
-    except ValueError as e:
+        return jsonify({"mood": analysis['dominant_emotion']})
+    except Exception as e:
         return jsonify({"mood": "no_face", "error": str(e)})
 
-@app.route('/start-capture')
-def start_capture():
-    user_mood = capture_emotions()
-    return jsonify({"mood": user_mood})
-
-def capture_emotions():
-    cap = cv2.VideoCapture(0)
-    captured_expressions = []
-    capture_limit = 20
-
-    while len(captured_expressions) < capture_limit:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        rgb_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2RGB)
-        faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-        for (x, y, w, h) in faces:
-            face_roi = rgb_frame[y:y + h, x:x + w]
-            result = DeepFace.analyze(face_roi, actions=['emotion'], enforce_detection=False)
-            emotion = result[0]['dominant_emotion']
-            if emotion == "neutral":
-                emotion = "sad"
-            captured_expressions.append(emotion)
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-    if captured_expressions:
-        final_emotion = Counter(captured_expressions).most_common(1)[0][0]
-    else:
-        final_emotion = "No emotion detected"
-
-    return final_emotion
-
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash('You have been logged out', 'success')
-    return redirect(url_for('home'))
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
