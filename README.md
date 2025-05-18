@@ -28,7 +28,7 @@ Welcome to the **Mental Health Chatbot** – an AI-powered web application desig
 
 ## 📸 Screenshots
 
-> _Add your screenshots here for homepage, chatbot, journal, and emotion detection._
+_
 
 ---
 
