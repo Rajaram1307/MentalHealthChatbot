@@ -67,7 +67,7 @@ mental-health-chatbot/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/mental-health-chatbot.git
+   git clone https://github.com/Rajaram1307/MentalHealthChatbot.git
    cd mental-health-chatbot
 python -m venv venv
 source venv/bin/activate  # On Windows use venv\Scripts\activate
