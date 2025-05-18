@@ -33,21 +33,17 @@ Welcome to the **Mental Health Chatbot** – an AI-powered web application desig
 <p align="center">
   <img src="static/assets/Screenshot 2025-04-10 181158.png" width="600"/>
 </p>
-<h3 align="center">🖼️ Chatbot Homepage</h3>
+<h3 align="center">🖼️ Message</h3>
 <p align="center">
-  <img src="static/assets/Screenshot 2025-04-10 181158.png" width="600"/>
+  <img src="static/assets/Screenshot 2025-04-10 181240.png" width="600"/>
 </p>
-<h3 align="center">🖼️ Chatbot Homepage</h3>
+<h3 align="center">🖼️ Chatbot Journaling</h3>
 <p align="center">
-  <img src="static/assets/Screenshot 2025-04-10 181158.png" width="600"/>
+  <img src="static/assets/Screenshot 2025-04-10 181310.png" width="600"/>
 </p>
-<h3 align="center">🖼️ Chatbot Homepage</h3>
+<h3 align="center">🖼️ Chatbot blog</h3>
 <p align="center">
-  <img src="static/assets/Screenshot 2025-04-10 181158.png" width="600"/>
-</p>
-<h3 align="center">🖼️ Chatbot Homepage</h3>
-<p align="center">
-  <img src="static/assets/Screenshot 2025-04-10 181158.png" width="600"/>
+  <img src="static/assets/Screenshot 2025-04-10 181404.png" width="600"/>
 </p>
 ---
 
